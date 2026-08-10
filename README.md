@@ -55,6 +55,24 @@ MAE, high-after-scan, and low-after-scan. A deterministic simulated provider is
 included strictly for tests; it is never presented as live market data. The GUI
 History tab shows saved runs and outcome completion progress.
 
+## Alpaca provider (v0.5.1)
+
+The Alpaca adapter supports latest single/multi-symbol snapshots, paginated
+historical bars, and asynchronous quote/trade/bar WebSocket streams. Credentials
+are read from `APCA_API_KEY_ID` and `APCA_API_SECRET_KEY`; they are never written
+to settings, exports, snapshots, or logs. The default feed is `iex` and every
+returned quote/candle carries provider, feed, real-time, and simulated-data
+attribution. Install the optional streaming dependency with:
+
+```powershell
+python -m pip install -r requirements.txt
+```
+
+Until valid credentials are configured and the provider is explicitly enabled,
+the GUI correctly displays `OFFLINE - CSV SNAPSHOT` rather than claiming to be
+live. IEX is a single-exchange feed and must not be represented as consolidated
+U.S. market coverage.
+
 ```powershell
 python -m wurkio_scanner --input data/sample_stocks.csv --config scanner_config.json
 ```

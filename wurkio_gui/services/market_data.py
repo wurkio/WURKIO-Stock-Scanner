@@ -14,6 +14,9 @@ class Quote:
     volume: int | None
     timestamp: datetime
     source: str
+    feed: str = ""
+    is_realtime: bool = False
+    is_simulated: bool = False
 
 
 @dataclass(frozen=True)
@@ -25,6 +28,10 @@ class Candle:
     low: float
     close: float
     volume: int
+    source: str = ""
+    feed: str = ""
+    is_realtime: bool = False
+    is_simulated: bool = False
 
 
 @runtime_checkable
@@ -51,7 +58,7 @@ class SimulatedMarketDataProvider:
         base = self.prices.get(symbol.upper(), 10.0)
         minutes = timestamp.minute + timestamp.hour * 60
         price = base * (1 + ((minutes % 17) - 8) / 1000)
-        return Quote(symbol.upper(), round(price, 4), round(price - 0.01, 4), round(price + 0.01, 4), 1_000_000, timestamp, self.name)
+        return Quote(symbol.upper(), round(price, 4), round(price - 0.01, 4), round(price + 0.01, 4), 1_000_000, timestamp, self.name, "simulated", False, True)
 
     def get_candles(self, symbol: str, start: datetime, end: datetime) -> list[Candle]:
         candles: list[Candle] = []
@@ -59,6 +66,6 @@ class SimulatedMarketDataProvider:
         while current <= end:
             quote = self.get_quote(symbol, current)
             price = quote.price
-            candles.append(Candle(symbol.upper(), current, price, price * 1.003, price * 0.997, price, 10_000))
+            candles.append(Candle(symbol.upper(), current, price, price * 1.003, price * 0.997, price, 10_000, self.name, "simulated", False, True))
             current += timedelta(minutes=1)
         return candles

@@ -24,3 +24,6 @@ class AppState:
     results: list[ScanResult] = field(default_factory=list)
     diagnostics: ScanDiagnostics = field(default_factory=ScanDiagnostics)
     last_run_id: int | None = None
+    provider_name: str = "csv"
+    provider_feed: str = "snapshot"
+    provider_connected: bool = False

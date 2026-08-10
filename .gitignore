@@ -9,3 +9,4 @@ exports/*.json
 .gui_qa.png
 data/wurkio_history.db
 data/wurkio_history.db-*
+.env

@@ -70,7 +70,7 @@ class ModernWindow:
             self.user_settings = controller.load_settings()
         except (OSError, ValueError):
             self.user_settings = {}
-        root.title("WURKIO Scanner v0.5 - Live Data & Outcome Tracking")
+        root.title("WURKIO Scanner v0.5.1 - Alpaca Integration")
         root.geometry(self.user_settings.get("window_geometry", "1580x940"))
         root.minsize(1280, 760)
         self._build()
@@ -96,6 +96,7 @@ class ModernWindow:
         theme_name = theme_name if theme_name in self.theme_paths else "Dark 2026"
         self.theme_var.set(theme_name)
         self._set_theme(theme_name)
+        self._update_feed_badge()
         root.protocol("WM_DELETE_WINDOW", self._close)
         self.root.after(150, self._scan)
 
@@ -126,8 +127,10 @@ class ModernWindow:
         theme_box.bind("<<ComboboxSelected>>", lambda _event: self._set_theme(self.theme_var.get()))
         live = ttk.Frame(self.header, padding=(10, 4), style="Market.TFrame")
         live.pack(side="right", padx=12)
-        ttk.Label(live, text="● LIVE", style="Live.TLabel").pack(side="left")
-        ttk.Label(live, text="  10:32:45 AM ET", style="HeaderMuted.TLabel").pack(side="left")
+        self.feed_status_var = tk.StringVar(value="● OFFLINE")
+        self.feed_detail_var = tk.StringVar(value="CSV SNAPSHOT")
+        ttk.Label(live, textvariable=self.feed_status_var, style="Offline.TLabel").pack(side="left")
+        ttk.Label(live, textvariable=self.feed_detail_var, style="HeaderMuted.TLabel").pack(side="left", padx=(7, 0))
 
         ticker = ttk.Frame(self.root, padding=(14, 7), style="Ticker.TFrame")
         ticker.pack(fill="x", padx=8, pady=(0, 7))
@@ -475,6 +478,15 @@ class ModernWindow:
             style="Muted.TLabel", wraplength=700,
         ).pack(anchor="w", padx=14, pady=(0, 12))
 
+    def _update_feed_badge(self) -> None:
+        state = self.controller.state
+        if state.provider_name == "alpaca":
+            self.feed_status_var.set("● READY")
+            self.feed_detail_var.set(f"ALPACA {state.provider_feed.upper()} | NOT STREAMING")
+        else:
+            self.feed_status_var.set("● OFFLINE")
+            self.feed_detail_var.set("CSV SNAPSHOT")
+
     def _display_results(self, results: list[ScanResult]) -> None:
         self.visible_results = list(results)
         self._render_results(self.visible_results)
@@ -629,6 +641,7 @@ class ModernWindow:
         self.style.configure("Positive.TLabel", background=theme["panel_alt"], foreground=theme["positive"], font=("Segoe UI", 9, "bold"))
         self.style.configure("Negative.TLabel", background=theme["panel_alt"], foreground=theme["negative"], font=("Segoe UI", 9, "bold"))
         self.style.configure("Live.TLabel", background=theme["panel_alt"], foreground=theme["positive"], font=("Segoe UI", 9, "bold"))
+        self.style.configure("Offline.TLabel", background=theme["panel_alt"], foreground=theme["muted"], font=("Segoe UI", 9, "bold"))
         self.style.configure("Section.TLabel", font=("Segoe UI", 11, "bold"), foreground=theme["accent"])
         self.style.configure("DetailTitle.TLabel", font=("Segoe UI", 16, "bold"), foreground=theme["text"])
         self.style.configure("CardLabel.TLabel", background=theme["panel_alt"], foreground=theme["muted"], font=("Segoe UI", 8, "bold"))

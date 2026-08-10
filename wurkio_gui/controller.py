@@ -12,6 +12,7 @@ from .services.export_service import ExportService
 from .services.settings_service import SettingsService
 from .services.snapshot_service import SnapshotService
 from .services.outcome_service import OutcomeService
+from .services.alpaca_market_data import AlpacaConfigurationError, AlpacaMarketDataProvider
 from .state import AppState
 
 
@@ -24,6 +25,28 @@ class AppController:
         self.settings = SettingsService()
         self.snapshots = SnapshotService()
         self.outcomes = OutcomeService()
+        self.market_data = None
+        self._configure_market_data()
+
+    def _configure_market_data(self) -> None:
+        import os
+
+        if os.environ.get("WURKIO_MARKET_DATA_PROVIDER", "").lower() != "alpaca":
+            return
+        try:
+            self.market_data = AlpacaMarketDataProvider(feed=os.environ.get("WURKIO_ALPACA_FEED", "iex"))
+        except AlpacaConfigurationError:
+            return
+        self.state.provider_name = self.market_data.name
+        self.state.provider_feed = self.market_data.feed
+
+    def process_due_outcomes(self) -> int:
+        if self.market_data is None:
+            return 0
+        processed = self.outcomes.process_due(self.market_data)
+        if processed:
+            self.state.provider_connected = True
+        return processed
 
     def available_presets(self) -> dict[str, Path]:
         return self.presets.list_presets()
