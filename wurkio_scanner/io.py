@@ -25,6 +25,14 @@ def load_stocks(path: str | Path) -> list[StockSnapshot]:
             raise ValueError(f"CSV is missing columns: {', '.join(sorted(missing))}")
         for line_number, row in enumerate(reader, start=2):
             try:
+                def optional_float(name: str) -> float | None:
+                    value = row.get(name, "").strip()
+                    return float(value) if value else None
+
+                def optional_int(name: str) -> int | None:
+                    value = row.get(name, "").strip()
+                    return int(float(value)) if value else None
+
                 stock = StockSnapshot(
                     symbol=row["symbol"].strip().upper(),
                     price=float(row["price"]),
@@ -34,6 +42,20 @@ def load_stocks(path: str | Path) -> list[StockSnapshot]:
                     avg_volume_5d=int(float(row["avg_volume_5d"])),
                     latest_percent_change=float(row["latest_percent_change"]),
                     float_shares=int(float(row["float_shares"])),
+                    open_price=optional_float("open_price"),
+                    previous_close=optional_float("previous_close"),
+                    day_high=optional_float("day_high"),
+                    day_low=optional_float("day_low"),
+                    vwap=optional_float("vwap"),
+                    sma_20=optional_float("sma_20"),
+                    sma_50=optional_float("sma_50"),
+                    sma_200=optional_float("sma_200"),
+                    premarket_price=optional_float("premarket_price"),
+                    premarket_volume=optional_int("premarket_volume"),
+                    market_cap=optional_float("market_cap"),
+                    short_float_percent=optional_float("short_float_percent"),
+                    week_52_high=optional_float("week_52_high"),
+                    week_52_low=optional_float("week_52_low"),
                 )
             except (TypeError, ValueError) as exc:
                 raise ValueError(f"Invalid market data on CSV line {line_number}: {exc}") from exc

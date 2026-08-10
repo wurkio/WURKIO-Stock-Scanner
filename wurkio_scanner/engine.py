@@ -50,6 +50,21 @@ class Scanner:
             if threshold is not None:
                 evaluations.append(FilterEvaluation(name, actual, f"<= {self._display(threshold)}{unit}", value <= threshold))
 
+        def optional_minimum(name: str, value: float | None, threshold: float | None, unit: str = "") -> None:
+            if threshold is not None:
+                actual = "N/A" if value is None else f"{value:,.2f}{unit}"
+                evaluations.append(FilterEvaluation(name, actual, f">= {threshold:,.2f}{unit}", value is not None and value >= threshold))
+
+        def optional_maximum(name: str, value: float | None, threshold: float | None, unit: str = "") -> None:
+            if threshold is not None:
+                actual = "N/A" if value is None else f"{value:,.2f}{unit}"
+                evaluations.append(FilterEvaluation(name, actual, f"<= {threshold:,.2f}{unit}", value is not None and value <= threshold))
+
+        def boolean_target(name: str, value: bool | None, target: bool | None) -> None:
+            if target is not None:
+                actual = "N/A" if value is None else ("Yes" if value else "No")
+                evaluations.append(FilterEvaluation(name, actual, "Yes" if target else "No", value is not None and value == target))
+
         minimum("Price minimum", stock.price, c.price_min, f"${stock.price:.2f}", "")
         maximum("Price maximum", stock.price, c.price_max, f"${stock.price:.2f}", "")
         minimum("RVOL", stock.rvol, c.rvol_min, f"{stock.rvol:.2f}")
@@ -62,6 +77,22 @@ class Scanner:
         minimum("Volume Change %", stock.volume_percent_change, c.volume_percent_change_min, f"{stock.volume_percent_change:.2f}%", "%")
         minimum("Float minimum", stock.float_shares, c.float_min, f"{stock.float_shares:,}")
         maximum("Float maximum", stock.float_shares, c.float_max, f"{stock.float_shares:,}")
+        boolean_target("Above VWAP", stock.above_vwap, c.above_vwap)
+        boolean_target("Above 20 SMA", stock.above_sma_20, c.above_sma_20)
+        boolean_target("Above 50 SMA", stock.above_sma_50, c.above_sma_50)
+        boolean_target("Above 200 SMA", stock.above_sma_200, c.above_sma_200)
+        optional_minimum("Gap %", stock.gap_percent, c.gap_percent_min, "%")
+        optional_minimum("Premarket % Change", stock.premarket_percent_change, c.premarket_percent_change_min, "%")
+        optional_minimum("Premarket Volume", stock.premarket_volume, c.premarket_volume_min)
+        optional_minimum("Market Cap minimum", stock.market_cap, c.market_cap_min, "")
+        optional_maximum("Market Cap maximum", stock.market_cap, c.market_cap_max, "")
+        optional_minimum("Short Float % minimum", stock.short_float_percent, c.short_float_percent_min, "%")
+        optional_maximum("Short Float % maximum", stock.short_float_percent, c.short_float_percent_max, "%")
+        optional_minimum("52W Range Position", stock.week_52_position, c.week_52_position_min, "%")
+        optional_minimum("Day Range Position", stock.day_range_position, c.day_range_position_min, "%")
+        optional_minimum("Dollar Volume", stock.dollar_volume, c.dollar_volume_min)
+        optional_minimum("Float Rotation", stock.float_rotation, c.float_rotation_min, "x")
+        optional_minimum("Distance From HOD", stock.distance_from_high_percent, c.distance_from_high_percent_min, "%")
         return tuple(evaluations)
 
     def score_breakdown(self, stock: StockSnapshot) -> tuple[ScoreComponent, ...]:

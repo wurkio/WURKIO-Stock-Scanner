@@ -10,5 +10,21 @@
   "latest_percent_change_min": null,
   "volume_percent_change_min": null,
   "float_min": null,
-  "float_max": null
+  "float_max": null,
+  "above_vwap": null,
+  "above_sma_20": null,
+  "above_sma_50": null,
+  "above_sma_200": null,
+  "gap_percent_min": null,
+  "premarket_percent_change_min": null,
+  "premarket_volume_min": null,
+  "market_cap_min": null,
+  "market_cap_max": null,
+  "short_float_percent_min": null,
+  "short_float_percent_max": null,
+  "week_52_position_min": null,
+  "day_range_position_min": null,
+  "dollar_volume_min": null,
+  "float_rotation_min": null,
+  "distance_from_high_percent_min": null
 }

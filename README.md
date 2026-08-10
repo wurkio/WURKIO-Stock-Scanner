@@ -41,6 +41,20 @@ configurable visible columns, positive/negative result coloring, quick presets,
 scan timing/count diagnostics, empty states, required-filter evaluations,
 non-blocking score targets, and a six-category WURKIO Score breakdown.
 
+The v0.4 market-intelligence foundation adds VWAP and SMA position, gap and
+premarket activity, market cap, short float, 52-week/day-range position, dollar
+volume, float rotation, and distance from the intraday high/low. These context
+metrics are informational and optionally filterable; they do not change the
+100-point score. Optional scan snapshots are stored locally in SQLite at
+`data/wurkio_history.db` for later score validation and performance research.
+
+The v0.5 outcome-tracking foundation defines a vendor-neutral market-data
+provider interface and restart-safe SQLite jobs for 5-minute, 15-minute,
+30-minute, 1-hour, and market-close observations. It calculates return, MFE,
+MAE, high-after-scan, and low-after-scan. A deterministic simulated provider is
+included strictly for tests; it is never presented as live market data. The GUI
+History tab shows saved runs and outcome completion progress.
+
 ```powershell
 python -m wurkio_scanner --input data/sample_stocks.csv --config scanner_config.json
 ```

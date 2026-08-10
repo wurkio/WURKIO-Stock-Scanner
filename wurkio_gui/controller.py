@@ -10,6 +10,8 @@ from .services.preset_service import PresetService
 from .services.scan_service import ScanService
 from .services.export_service import ExportService
 from .services.settings_service import SettingsService
+from .services.snapshot_service import SnapshotService
+from .services.outcome_service import OutcomeService
 from .state import AppState
 
 
@@ -20,6 +22,8 @@ class AppController:
         self.scans = ScanService()
         self.exports = ExportService()
         self.settings = SettingsService()
+        self.snapshots = SnapshotService()
+        self.outcomes = OutcomeService()
 
     def available_presets(self) -> dict[str, Path]:
         return self.presets.list_presets()
@@ -41,9 +45,18 @@ class AppController:
     def set_input(self, path: str | Path) -> None:
         self.state.input_path = Path(path)
 
-    def scan(self) -> list[ScanResult]:
+    def scan(self, save_snapshot: bool = False, preset: str = "") -> list[ScanResult]:
         self.state.results, self.state.diagnostics = self.scans.scan(self.state.input_path, self.state.config)
+        if save_snapshot:
+            self.state.last_run_id = self.snapshots.save_scan(
+                self.state.results, self.state.diagnostics,
+                preset or self.state.config_path.stem, str(self.state.input_path),
+            )
+            self.outcomes.schedule_run(self.state.last_run_id)
         return self.state.results
+
+    def recent_scan_runs(self, limit: int = 25) -> list[tuple]:
+        return self.outcomes.recent_runs(limit)
 
     def save_preset(self, name: str, overwrite: bool = False) -> Path:
         path = self.presets.save(name, self.state.config, overwrite)

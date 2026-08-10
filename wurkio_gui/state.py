@@ -23,3 +23,4 @@ class AppState:
     theme_name: str = "dark_2026"
     results: list[ScanResult] = field(default_factory=list)
     diagnostics: ScanDiagnostics = field(default_factory=ScanDiagnostics)
+    last_run_id: int | None = None

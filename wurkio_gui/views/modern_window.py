@@ -25,6 +25,22 @@ FILTER_FIELDS = (
     ("volume_percent_change_min", "Volume Change %", "float"),
     ("float_min", "Float - minimum", "int"),
     ("float_max", "Float - maximum", "int"),
+    ("above_vwap", "Price Above VWAP", "bool"),
+    ("above_sma_20", "Price Above 20 SMA", "bool"),
+    ("above_sma_50", "Price Above 50 SMA", "bool"),
+    ("above_sma_200", "Price Above 200 SMA", "bool"),
+    ("gap_percent_min", "Gap %", "float"),
+    ("premarket_percent_change_min", "Premarket % Change", "float"),
+    ("premarket_volume_min", "Premarket Volume", "int"),
+    ("market_cap_min", "Market Cap - minimum", "float"),
+    ("market_cap_max", "Market Cap - maximum", "float"),
+    ("short_float_percent_min", "Short Float % - minimum", "float"),
+    ("short_float_percent_max", "Short Float % - maximum", "float"),
+    ("week_52_position_min", "52W Position %", "float"),
+    ("day_range_position_min", "Day Range Position %", "float"),
+    ("dollar_volume_min", "Dollar Volume", "float"),
+    ("float_rotation_min", "Float Rotation", "float"),
+    ("distance_from_high_percent_min", "Distance From HOD %", "float"),
 )
 
 RESULT_COLUMNS = (
@@ -54,7 +70,7 @@ class ModernWindow:
             self.user_settings = controller.load_settings()
         except (OSError, ValueError):
             self.user_settings = {}
-        root.title("WURKIO Scanner v0.2")
+        root.title("WURKIO Scanner v0.5 - Live Data & Outcome Tracking")
         root.geometry(self.user_settings.get("window_geometry", "1580x940"))
         root.minsize(1280, 760)
         self._build()
@@ -96,8 +112,9 @@ class ModernWindow:
 
         nav = ttk.Frame(self.header, style="Header.TFrame")
         nav.pack(side="left", padx=70)
-        for index, name in enumerate(("SCANNER", "WATCHLIST", "ALERTS", "NEWS", "MARKET", "JOURNAL", "TOOLS")):
-            ttk.Button(nav, text=name, style="NavActive.TButton" if index == 0 else "Nav.TButton").pack(side="left", padx=2)
+        for index, name in enumerate(("SCANNER", "WATCHLIST", "ALERTS", "HISTORY", "MARKET", "JOURNAL", "TOOLS")):
+            command = self._show_history if name == "HISTORY" else None
+            ttk.Button(nav, text=name, command=command, style="NavActive.TButton" if index == 0 else "Nav.TButton").pack(side="left", padx=2)
 
         ttk.Label(self.header, text="Theme:").pack(side="right", padx=(12, 5))
         self.theme_var = tk.StringVar(value="Dark 2026")
@@ -194,6 +211,8 @@ class ModernWindow:
 
         self.scan_button = ttk.Button(parent, text="SCAN NOW", style="Accent.TButton", command=self._scan)
         self.scan_button.pack(fill="x", pady=(7, 4), ipady=6)
+        self.save_snapshot_var = tk.BooleanVar(value=self.user_settings.get("save_snapshots", True))
+        ttk.Checkbutton(parent, text="Save scan snapshot to history", variable=self.save_snapshot_var).pack(anchor="w", pady=(0, 5))
         ttk.Button(parent, text="SAVE FILTER SET", command=self._save_preset).pack(fill="x", pady=(0, 4))
         ttk.Button(parent, text="RESET TO PRESET", command=self._reload_preset).pack(fill="x")
 
@@ -289,12 +308,19 @@ class ModernWindow:
         ttk.Label(level2, text="LIVE ORDER BOOK", style="CardLabel.TLabel").pack(anchor="w")
         ttk.Label(level2, text="Requires live market data", style="Placeholder.TLabel").pack(expand=True, pady=30)
 
-        info = ttk.LabelFrame(bottom, text="6  STOCK INFO", padding=12)
+        info = ttk.LabelFrame(bottom, text="6  MARKET CONTEXT", padding=12)
         info.pack(side="left", fill="both", expand=True)
-        self.info_vars = {key: tk.StringVar(value="--") for key in ("ticker", "float", "source")}
-        for row, (label, key) in enumerate((("Ticker", "ticker"), ("Float", "float"), ("Source", "source"))):
-            ttk.Label(info, text=label, style="Muted.TLabel").grid(row=row, column=0, sticky="w", pady=5)
-            ttk.Label(info, textvariable=self.info_vars[key]).grid(row=row, column=1, sticky="w", padx=(12, 0), pady=5)
+        context_fields = (
+            ("VWAP", "vwap"), ("Gap", "gap"), ("20/50/200 SMA", "smas"),
+            ("Premarket", "premarket"), ("Dollar Volume", "dollar_volume"),
+            ("Float Rotation", "rotation"), ("From HOD", "hod"),
+            ("Day / 52W Position", "positions"), ("Market Cap", "market_cap"),
+            ("Short Float", "short_float"),
+        )
+        self.info_vars = {key: tk.StringVar(value="--") for _label, key in context_fields}
+        for row, (label, key) in enumerate(context_fields):
+            ttk.Label(info, text=label, style="Muted.TLabel").grid(row=row, column=0, sticky="w", pady=2)
+            ttk.Label(info, textvariable=self.info_vars[key]).grid(row=row, column=1, sticky="w", padx=(8, 0), pady=2)
 
     def _toggle_filter(self, key: str) -> None:
         if not self.filter_enabled[key].get():
@@ -357,7 +383,15 @@ class ModernWindow:
             raw = self.filter_values[key].get().strip().replace(",", "")
             if not raw:
                 raise ValueError(f"{key} is enabled but has no value")
-            values[key] = int(raw) if kinds[key] == "int" else float(raw)
+            if kinds[key] == "int":
+                values[key] = int(raw)
+            elif kinds[key] == "bool":
+                normalized = raw.lower()
+                if normalized not in ("true", "yes", "1", "false", "no", "0"):
+                    raise ValueError(f"{key} must be Yes/No or True/False")
+                values[key] = normalized in ("true", "yes", "1")
+            else:
+                values[key] = float(raw)
         return values
 
     def _choose_csv(self) -> None:
@@ -376,7 +410,7 @@ class ModernWindow:
             self.status_var.set("Scanning...")
             self.root.update_idletasks()
             self.controller.update_config(self._read_config())
-            results = self.controller.scan()
+            results = self.controller.scan(self.save_snapshot_var.get(), self.preset_var.get())
             self._display_results(results)
             now = datetime.now().strftime("%I:%M:%S %p")
             self.last_scan_var.set(f"Last scan: {now}")
@@ -386,6 +420,7 @@ class ModernWindow:
                 self.status_var.set(
                     f"Scan complete  |  {diagnostics.rows_processed:,} stocks processed  |  "
                     f"{diagnostics.matches:,} matches  |  {diagnostics.duration_seconds * 1000:.1f} ms"
+                    + (f"  |  Snapshot #{self.controller.state.last_run_id}" if self.save_snapshot_var.get() else "")
                 )
             else:
                 self.status_var.set(
@@ -417,6 +452,28 @@ class ModernWindow:
             messagebox.showinfo("Export complete", f"Saved to {destination}", parent=self.root)
         except Exception as exc:
             messagebox.showerror("Unable to export", str(exc), parent=self.root)
+
+    def _show_history(self) -> None:
+        dialog = tk.Toplevel(self.root)
+        dialog.title("WURKIO Scan History")
+        dialog.geometry("760x440")
+        dialog.transient(self.root)
+        ttk.Label(dialog, text="SCAN HISTORY & OUTCOME PROGRESS", style="Section.TLabel").pack(anchor="w", padx=14, pady=12)
+        columns = ("id", "timestamp", "preset", "matches", "outcomes")
+        tree = ttk.Treeview(dialog, columns=columns, show="headings")
+        headings = ("RUN", "TIMESTAMP", "PRESET", "MATCHES", "OUTCOMES")
+        widths = (60, 210, 180, 80, 110)
+        for column, heading, width in zip(columns, headings, widths):
+            tree.heading(column, text=heading)
+            tree.column(column, width=width, anchor="center")
+        for run_id, timestamp, preset, matches, complete, total in self.controller.recent_scan_runs():
+            tree.insert("", "end", values=(run_id, timestamp, preset, matches, f"{complete or 0} / {total or 0}"))
+        tree.pack(fill="both", expand=True, padx=14, pady=(0, 8))
+        ttk.Label(
+            dialog,
+            text="Outcome jobs remain pending until a real market-data provider is configured. Simulated data is used only by automated tests.",
+            style="Muted.TLabel", wraplength=700,
+        ).pack(anchor="w", padx=14, pady=(0, 12))
 
     def _display_results(self, results: list[ScanResult]) -> None:
         self.visible_results = list(results)
@@ -518,9 +575,16 @@ class ModernWindow:
         }
         for key, value in values.items():
             self.detail_vars[key].set(value)
-        self.info_vars["ticker"].set(s.symbol)
-        self.info_vars["float"].set(self._compact(s.float_shares))
-        self.info_vars["source"].set(Path(self.controller.state.input_path).name)
+        self.info_vars["vwap"].set(self._context_vwap(s))
+        self.info_vars["gap"].set(self._optional_percent(s.gap_percent))
+        self.info_vars["smas"].set(" / ".join(self._yes_no(value) for value in (s.above_sma_20, s.above_sma_50, s.above_sma_200)))
+        self.info_vars["premarket"].set(f"{self._optional_percent(s.premarket_percent_change)} | {self._compact(s.premarket_volume) if s.premarket_volume is not None else 'N/A'}")
+        self.info_vars["dollar_volume"].set(f"${self._compact(round(s.dollar_volume))}")
+        self.info_vars["rotation"].set("N/A" if s.float_rotation is None else f"{s.float_rotation:.2f}x")
+        self.info_vars["hod"].set(self._optional_percent(s.distance_from_high_percent))
+        self.info_vars["positions"].set(f"{self._optional_percent(s.day_range_position)} / {self._optional_percent(s.week_52_position)}")
+        self.info_vars["market_cap"].set("N/A" if s.market_cap is None else f"${self._compact(round(s.market_cap))}")
+        self.info_vars["short_float"].set(self._optional_percent(s.short_float_percent))
         passed = [item for item in result.evaluations if item.passed]
         failed = [item for item in result.evaluations if not item.passed]
         self.pass_reasons.set("PASSED  " + "   ".join(f"✓ {item.name} {item.requirement}" for item in passed))
@@ -540,6 +604,7 @@ class ModernWindow:
                 "last_csv": str(self.controller.state.input_path),
                 "window_geometry": self.root.geometry(),
                 "visible_columns": list(self.results.cget("displaycolumns")),
+                "save_snapshots": self.save_snapshot_var.get(),
             })
         finally:
             self.root.destroy()
@@ -601,3 +666,17 @@ class ModernWindow:
         if value >= 1_000:
             return f"{value / 1_000:.0f}K"
         return str(value)
+
+    @staticmethod
+    def _yes_no(value: bool | None) -> str:
+        return "N/A" if value is None else ("Yes" if value else "No")
+
+    @staticmethod
+    def _optional_percent(value: float | None) -> str:
+        return "N/A" if value is None else f"{value:+.2f}%"
+
+    @classmethod
+    def _context_vwap(cls, stock) -> str:
+        if stock.vwap is None:
+            return "N/A"
+        return f"{cls._yes_no(stock.above_vwap)} ({cls._optional_percent(stock.distance_from_vwap_percent)})"
