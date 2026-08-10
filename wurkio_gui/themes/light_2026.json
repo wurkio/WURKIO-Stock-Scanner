@@ -1,0 +1,7 @@
+{
+  "name": "Light 2026", "layout": "modern",
+  "window": "#f5f7fa", "panel": "#ffffff", "panel_alt": "#eef2f6",
+  "border": "#ccd4dd", "text": "#111820", "muted": "#5b6573",
+  "positive": "#008f35", "negative": "#cf2634", "accent": "#075ee8",
+  "input": "#ffffff", "selection": "#dce9ff"
+}

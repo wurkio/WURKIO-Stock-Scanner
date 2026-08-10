@@ -1,0 +1,9 @@
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+settings/user_settings.json
+exports/*.csv
+exports/*.json
+.gui_qa.png

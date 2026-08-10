@@ -1,0 +1,7 @@
+{
+  "theme": "Dark 2026",
+  "last_preset": "WURKIO Default",
+  "last_csv": "data/sample_stocks.csv",
+  "window_geometry": "1580x940",
+  "visible_columns": ["rank", "symbol", "price", "change", "rvol", "volume", "avg20", "atrp", "float", "score"]
+}

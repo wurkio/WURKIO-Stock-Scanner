@@ -1,0 +1,7 @@
+{
+  "name": "Dark 2026", "layout": "modern",
+  "window": "#071019", "panel": "#0c1721", "panel_alt": "#101e29",
+  "border": "#24323d", "text": "#e9eef2", "muted": "#8e9aa5",
+  "positive": "#20d76b", "negative": "#ff5964", "accent": "#00c957",
+  "input": "#07131c", "selection": "#16472c"
+}

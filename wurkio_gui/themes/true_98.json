@@ -1,0 +1,7 @@
+{
+  "name": "True 98", "layout": "classic",
+  "window": "#c0c0c0", "panel": "#d4d0c8", "panel_alt": "#ffffff",
+  "border": "#808080", "text": "#000000", "muted": "#333333",
+  "positive": "#008000", "negative": "#c00000", "accent": "#000080",
+  "input": "#ffffff", "selection": "#000080"
+}

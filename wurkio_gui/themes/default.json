@@ -1,0 +1,7 @@
+{
+  "name": "WURKIO Default", "layout": "modern",
+  "window": "#060d15", "panel": "#0c1620", "panel_alt": "#111d28",
+  "border": "#25313d", "text": "#f1f4f7", "muted": "#9ca6b0",
+  "positive": "#49d36d", "negative": "#ff5964", "accent": "#38c760",
+  "input": "#09131d", "selection": "#174c2a"
+}

@@ -1,0 +1,7 @@
+{
+  "name": "Windows 98", "layout": "classic",
+  "window": "#c0c0c0", "panel": "#c0c0c0", "panel_alt": "#ffffff",
+  "border": "#808080", "text": "#000000", "muted": "#404040",
+  "positive": "#008000", "negative": "#c00000", "accent": "#000080",
+  "input": "#ffffff", "selection": "#000080"
+}

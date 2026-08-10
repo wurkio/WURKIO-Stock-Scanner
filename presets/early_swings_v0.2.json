@@ -1,0 +1,8 @@
+{
+  "price_min": 1, "price_max": 20,
+  "rvol_min": 1.5, "current_volume_min": 200000,
+  "avg_volume_5d_min": null, "avg_volume_20d_min": null,
+  "atr_percent_min": 5, "atr_percent_max": null,
+  "latest_percent_change_min": 12, "volume_percent_change_min": 30,
+  "float_min": null, "float_max": null
+}

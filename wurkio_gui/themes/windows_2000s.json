@@ -1,0 +1,7 @@
+{
+  "name": "Windows 2000s", "layout": "classic",
+  "window": "#ece9d8", "panel": "#f3f0e7", "panel_alt": "#ffffff",
+  "border": "#7f9db9", "text": "#000000", "muted": "#3f3f3f",
+  "positive": "#008000", "negative": "#c00000", "accent": "#0054e3",
+  "input": "#ffffff", "selection": "#316ac5"
+}
